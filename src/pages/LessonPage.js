@@ -19,7 +19,6 @@ const LessonPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const lessonId = parseInt(id);
-
   const lessonIndex = lessons.findIndex((l) => l.id === lessonId);
   const lesson = lessons[lessonIndex];
 
@@ -27,51 +26,62 @@ const LessonPage = () => {
     const saved = localStorage.getItem("completedLessons");
     return saved ? JSON.parse(saved) : [];
   });
-
   const [quizAnswers, setQuizAnswers] = useState({});
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speech, setSpeech] = useState(null);
+  const [selectedVoice, setSelectedVoice] = useState(null);
 
+  // Save completed lessons to localStorage
   useEffect(() => {
     localStorage.setItem("completedLessons", JSON.stringify(completedLessons));
   }, [completedLessons]);
 
-  // Stop speech on page unload
+  // Load voices for speech synthesis
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      stopSpeech();
+    const loadVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+      const englishVoice =
+        availableVoices.find((v) => v.lang === "en-US") || availableVoices[0];
+      setSelectedVoice(englishVoice); // Default to en-US or first available
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices(); // Initial call in case voices are already loaded
+
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.speechSynthesis.onvoiceschanged = null;
     };
   }, []);
 
-  // Set document title and og:title meta tag based on lesson title
+  // Stop speech on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => stopSpeech();
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [speech]);
+
+  // Set document title and og:title meta tag
   useEffect(() => {
     if (lesson) {
-      // Set the document title
-      document.title = `${lessonId}. ${lesson.title}`;
+      const title = `${lessonId}. ${lesson.title}`;
+      document.title = title;
 
-      // Set or update the og:title meta tag
       let ogTitleTag = document.querySelector('meta[property="og:title"]');
       if (!ogTitleTag) {
         ogTitleTag = document.createElement("meta");
         ogTitleTag.setAttribute("property", "og:title");
         document.head.appendChild(ogTitleTag);
       }
-      ogTitleTag.setAttribute("content", `${lessonId}. ${lesson.title}`);
+      ogTitleTag.setAttribute("content", title);
     }
 
-    // Cleanup: Optionally reset title/meta when component unmounts
     return () => {
-      document.title = "Business Analyst Fundamentals"; // Replace with your app's default title
+      document.title = "Business Analyst Fundamentals";
       const ogTitleTag = document.querySelector('meta[property="og:title"]');
-      if (ogTitleTag) {
-        ogTitleTag.setAttribute("content", "Business Analyst Fundamentals"); // Replace with default
-      }
+      if (ogTitleTag)
+        ogTitleTag.setAttribute("content", "Business Analyst Fundamentals");
     };
-  }, [lessonId, lesson]); // Runs when lessonId or lesson changes
+  }, [lessonId, lesson]);
 
   const markLessonComplete = () => {
     if (!completedLessons.includes(lessonId)) {
@@ -91,19 +101,32 @@ const LessonPage = () => {
   };
 
   const speakContent = () => {
-    if (isSpeaking) return;
+    if (isSpeaking || !selectedVoice) return;
+
     const textContent = lesson.content.replace(/<[^>]+>/g, "");
     const utterance = new SpeechSynthesisUtterance(textContent);
-    utterance.lang = "en";
-    utterance.rate = 0.8;
-    utterance.onend = () => setIsSpeaking(false);
+    utterance.voice = selectedVoice; // Explicitly set English voice
+    utterance.lang = selectedVoice.lang; // Match lang to voice
+    utterance.rate = 1.0; // Default rate (iOS can be inconsistent with <1)
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setSpeech(null);
+    };
+    utterance.onerror = (e) => {
+      console.error("Speech error:", e);
+      setIsSpeaking(false);
+      setSpeech(null);
+    };
+
     setSpeech(utterance);
     window.speechSynthesis.speak(utterance);
-    setIsSpeaking(true);
   };
 
   const pauseSpeech = () => {
-    if (isSpeaking) {
+    if (isSpeaking && speech) {
       window.speechSynthesis.pause();
       setIsSpeaking(false);
     }
@@ -162,12 +185,10 @@ const LessonPage = () => {
           <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
           Previous
         </Button>
-
         <Button variant="primary" onClick={handleHomeClick}>
           <FontAwesomeIcon icon={faHome} className="me-2" />
           Home
         </Button>
-
         <Button
           variant="secondary"
           onClick={() => handleNavigation(lessons[lessonIndex + 1].id)}
@@ -183,7 +204,7 @@ const LessonPage = () => {
         <Button
           variant="success"
           onClick={speakContent}
-          disabled={isSpeaking || speech}
+          disabled={isSpeaking || !selectedVoice}
           className="me-2"
         >
           <FontAwesomeIcon icon={faPlay} />
@@ -227,12 +248,10 @@ const LessonPage = () => {
           <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
           Previous
         </Button>
-
         <Button variant="primary" onClick={handleHomeClick}>
           <FontAwesomeIcon icon={faHome} className="me-2" />
           Home
         </Button>
-
         <Button
           variant="secondary"
           onClick={() => handleNavigation(lessons[lessonIndex + 1].id)}
