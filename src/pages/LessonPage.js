@@ -204,7 +204,7 @@ const LessonPage = () => {
         <Button
           variant="success"
           onClick={speakContent}
-          disabled={isSpeaking || !selectedVoice}
+          disabled={isSpeaking || !selectedVoice || speech}
           className="me-2"
         >
           <FontAwesomeIcon icon={faPlay} />
