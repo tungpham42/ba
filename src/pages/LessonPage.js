@@ -85,8 +85,9 @@ const LessonPage = () => {
           <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
         </Button>
       </div>
-
+      <h3 className="text-left">Content</h3>
       <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+      <h3 className="text-left">Quiz</h3>
       <Quiz
         quiz={lesson.quiz}
         onComplete={markLessonComplete}
