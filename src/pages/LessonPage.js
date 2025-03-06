@@ -9,6 +9,7 @@ import {
   faPlay,
   faPause,
   faStop,
+  faCheck, // Added check icon for completion
 } from "@fortawesome/free-solid-svg-icons";
 import lessons from "../data/lessons";
 import Quiz from "../components/Quiz";
@@ -43,7 +44,7 @@ const LessonPage = () => {
 
   const handleNavigation = (lessonId) => {
     setQuizAnswers({});
-    stopSpeech(); // Reset speech completely before navigation
+    stopSpeech();
     navigate(`/lesson/${lessonId}`);
   };
 
@@ -92,9 +93,20 @@ const LessonPage = () => {
     );
   }
 
+  const isCompleted = completedLessons.includes(lessonId);
+
   return (
     <Container className="my-3">
-      <h2>{`${lessonId}. ${lesson.title}`}</h2>
+      <h2>
+        {`${lessonId}. ${lesson.title}`}
+        {isCompleted && (
+          <FontAwesomeIcon
+            icon={faCheck}
+            className="ms-2 text-success"
+            title="Lesson Completed"
+          />
+        )}
+      </h2>
       <ProgressTracker
         completed={completedLessons.length}
         total={lessons.length}
