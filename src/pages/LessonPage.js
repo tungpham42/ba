@@ -9,7 +9,7 @@ import {
   faPlay,
   faPause,
   faStop,
-  faCheck, // Added check icon for completion
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import lessons from "../data/lessons";
 import Quiz from "../components/Quiz";
@@ -44,8 +44,13 @@ const LessonPage = () => {
 
   const handleNavigation = (lessonId) => {
     setQuizAnswers({});
-    stopSpeech();
+    stopSpeech(); // Stop speech before navigating
     navigate(`/lesson/${lessonId}`);
+  };
+
+  const handleHomeClick = () => {
+    stopSpeech(); // Stop speech before navigating to home
+    navigate("/");
   };
 
   const speakContent = () => {
@@ -85,7 +90,7 @@ const LessonPage = () => {
     return (
       <Container className="my-3">
         <h2>Lesson not found</h2>
-        <Button variant="primary" onClick={() => navigate("/")}>
+        <Button variant="primary" onClick={handleHomeClick}>
           <FontAwesomeIcon icon={faHome} className="me-2" />
           Back to Home
         </Button>
@@ -122,7 +127,7 @@ const LessonPage = () => {
           Previous
         </Button>
 
-        <Button variant="primary" onClick={() => navigate("/")}>
+        <Button variant="primary" onClick={handleHomeClick}>
           <FontAwesomeIcon icon={faHome} className="me-2" />
           Home
         </Button>
@@ -187,7 +192,7 @@ const LessonPage = () => {
           Previous
         </Button>
 
-        <Button variant="primary" onClick={() => navigate("/")}>
+        <Button variant="primary" onClick={handleHomeClick}>
           <FontAwesomeIcon icon={faHome} className="me-2" />
           Home
         </Button>
