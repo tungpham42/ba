@@ -36,6 +36,20 @@ const LessonPage = () => {
     localStorage.setItem("completedLessons", JSON.stringify(completedLessons));
   }, [completedLessons]);
 
+  // Stop speech on page unload (e.g., hard reload, navigation away)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      stopSpeech();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []); // Empty dependency array ensures this runs once on mount/unmount
+
   const markLessonComplete = () => {
     if (!completedLessons.includes(lessonId)) {
       setCompletedLessons((prev) => [...prev, lessonId]);
@@ -44,12 +58,12 @@ const LessonPage = () => {
 
   const handleNavigation = (lessonId) => {
     setQuizAnswers({});
-    stopSpeech(); // Stop speech before navigating
+    stopSpeech();
     navigate(`/lesson/${lessonId}`);
   };
 
   const handleHomeClick = () => {
-    stopSpeech(); // Stop speech before navigating to home
+    stopSpeech();
     navigate("/");
   };
 
