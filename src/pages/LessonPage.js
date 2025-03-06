@@ -94,7 +94,7 @@ const LessonPage = () => {
     if (isSpeaking) return;
     const textContent = lesson.content.replace(/<[^>]+>/g, "");
     const utterance = new SpeechSynthesisUtterance(textContent);
-    utterance.lang = "en-US";
+    utterance.lang = "en";
     utterance.rate = 0.8;
     utterance.onend = () => setIsSpeaking(false);
     setSpeech(utterance);
