@@ -9,7 +9,7 @@ const LessonCard = ({ lesson: { id, title, content }, onStart, completed }) => {
         <Card.Body className="d-flex flex-column">
           {/* Title with Completed Indicator */}
           <Card.Title className="d-flex justify-content-between align-items-center">
-            {title}
+            {`${id}. ${title}`}
             {completed && (
               <Badge bg="success">
                 <FontAwesomeIcon icon={faCheckCircle} className="me-1" />
@@ -20,7 +20,7 @@ const LessonCard = ({ lesson: { id, title, content }, onStart, completed }) => {
 
           <Card.Text
             dangerouslySetInnerHTML={{
-              __html: content.substring(0, 50) + "...",
+              __html: content.substring(0, 160) + "...",
             }}
           />
 

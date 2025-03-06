@@ -43,10 +43,7 @@ const LessonPage = () => {
 
   const handleNavigation = (lessonId) => {
     setQuizAnswers({});
-    if (speech) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
+    stopSpeech(); // Reset speech completely before navigation
     navigate(`/lesson/${lessonId}`);
   };
 
@@ -56,7 +53,7 @@ const LessonPage = () => {
     const textContent = lesson.content.replace(/<[^>]+>/g, "");
     const utterance = new SpeechSynthesisUtterance(textContent);
     utterance.lang = "en-US";
-    utterance.rate = 0.8; // Slow down the speech (adjustable: 0.1 to 1.0 for slower speeds)
+    utterance.rate = 0.8;
     utterance.onend = () => setIsSpeaking(false);
     setSpeech(utterance);
     window.speechSynthesis.speak(utterance);
@@ -97,7 +94,7 @@ const LessonPage = () => {
 
   return (
     <Container className="my-3">
-      <h2>{lesson.title}</h2>
+      <h2>{`${lessonId}. ${lesson.title}`}</h2>
       <ProgressTracker
         completed={completedLessons.length}
         total={lessons.length}
