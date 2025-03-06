@@ -1,8 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Container, Button } from "react-bootstrap";
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHome } from "@fortawesome/free-solid-svg-icons";
+import {
+  faHome,
+  faArrowLeft,
+  faArrowRight,
+} from "@fortawesome/free-solid-svg-icons";
 import lessons from "../data/lessons";
 import Quiz from "../components/Quiz";
 import ProgressTracker from "../components/ProgressTracker";
@@ -12,10 +16,8 @@ const LessonPage = () => {
   const navigate = useNavigate();
   const lessonId = parseInt(id);
 
-  const lesson = useMemo(
-    () => lessons.find((l) => l.id === lessonId),
-    [lessonId]
-  );
+  const lessonIndex = lessons.findIndex((l) => l.id === lessonId);
+  const lesson = lessons[lessonIndex];
 
   const [completedLessons, setCompletedLessons] = useState(() => {
     const saved = localStorage.getItem("completedLessons");
@@ -28,7 +30,7 @@ const LessonPage = () => {
 
   const markLessonComplete = () => {
     if (!completedLessons.includes(lessonId)) {
-      setCompletedLessons([...completedLessons, lessonId]);
+      setCompletedLessons((prev) => [...prev, lessonId]);
     }
   };
 
@@ -44,23 +46,63 @@ const LessonPage = () => {
     );
   }
 
-  const { title, content, quiz } = lesson;
-
   return (
     <Container className="my-3">
-      <h2>{title}</h2>
+      <h2>{lesson.title}</h2>
       <ProgressTracker
         completed={completedLessons.length}
         total={lessons.length}
       />
-      <div dangerouslySetInnerHTML={{ __html: content }} />
-      <Quiz quiz={quiz} onComplete={markLessonComplete} />
+      <div className="my-4 d-flex justify-content-between">
+        <Button
+          variant="secondary"
+          onClick={() => navigate(`/lesson/${lessons[lessonIndex - 1].id}`)}
+          disabled={lessonIndex === 0}
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+          Previous
+        </Button>
 
-      {/* Back to Home Button */}
-      <div className="mt-4">
         <Button variant="primary" onClick={() => navigate("/")}>
           <FontAwesomeIcon icon={faHome} className="me-2" />
-          Back to Home
+          Home
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={() => navigate(`/lesson/${lessons[lessonIndex + 1].id}`)}
+          disabled={lessonIndex === lessons.length - 1}
+        >
+          Next
+          <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
+        </Button>
+      </div>
+      <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+      <Quiz quiz={lesson.quiz} onComplete={markLessonComplete} />
+
+      {/* Navigation Buttons */}
+      <div className="mt-4 d-flex justify-content-between">
+        <Button
+          variant="secondary"
+          onClick={() => navigate(`/lesson/${lessons[lessonIndex - 1].id}`)}
+          disabled={lessonIndex === 0}
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+          Previous
+        </Button>
+
+        <Button variant="primary" onClick={() => navigate("/")}>
+          <FontAwesomeIcon icon={faHome} className="me-2" />
+          Home
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={() => navigate(`/lesson/${lessons[lessonIndex + 1].id}`)}
+          disabled={lessonIndex === lessons.length - 1}
+        >
+          Next
+          <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
         </Button>
       </div>
     </Container>

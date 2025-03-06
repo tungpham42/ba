@@ -32,15 +32,6 @@ function Home() {
     setCurrentPage(page);
   };
 
-  // Mark a lesson as completed
-  const handleLessonComplete = (id) => {
-    if (!completedLessons.includes(id)) {
-      const updatedProgress = [...completedLessons, id];
-      setCompletedLessons(updatedProgress);
-      localStorage.setItem("completedLessons", JSON.stringify(updatedProgress));
-    }
-  };
-
   // Clear progress function
   const handleClearProgress = () => {
     setCompletedLessons([]);
@@ -75,10 +66,7 @@ function Home() {
             key={lesson.id}
             lesson={lesson}
             completed={completedLessons.includes(lesson.id)}
-            onStart={(id) => {
-              handleLessonComplete(id);
-              navigate(`/lesson/${id}`);
-            }}
+            onStart={(id) => navigate(`/lesson/${id}`)} // No longer updates progress on click
           />
         ))}
       </Row>

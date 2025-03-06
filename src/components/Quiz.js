@@ -6,7 +6,6 @@ import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 const Quiz = ({ quiz, onComplete }) => {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState(null);
-  const [allCorrect, setAllCorrect] = useState(false);
 
   const handleChange = (questionIdx, value) => {
     setAnswers((prev) => ({ ...prev, [questionIdx]: value }));
@@ -19,12 +18,10 @@ const Quiz = ({ quiz, onComplete }) => {
     setResults(resultArray);
 
     // Check if all answers are correct
-    const isAllCorrect = resultArray.every((res) => res === "Correct");
-    setAllCorrect(isAllCorrect);
+    const allCorrect = resultArray.every((res) => res === "Correct");
 
-    // If all answers are correct, trigger lesson completion
-    if (isAllCorrect) {
-      onComplete(); // Ensure progress only updates here
+    if (allCorrect) {
+      onComplete(); // Only mark the lesson complete when all answers are correct
     }
   };
 
@@ -63,7 +60,7 @@ const Quiz = ({ quiz, onComplete }) => {
         <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
         Submit All Answers
       </Button>
-      {results && allCorrect && (
+      {results && results.every((res) => res === "Correct") && (
         <Alert variant="success" className="mt-3">
           🎉 All answers are correct! Lesson marked as completed.
         </Alert>
