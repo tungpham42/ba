@@ -36,19 +36,42 @@ const LessonPage = () => {
     localStorage.setItem("completedLessons", JSON.stringify(completedLessons));
   }, [completedLessons]);
 
-  // Stop speech on page unload (e.g., hard reload, navigation away)
+  // Stop speech on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
       stopSpeech();
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
-
-    // Cleanup the event listener when the component unmounts
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []); // Empty dependency array ensures this runs once on mount/unmount
+  }, []);
+
+  // Set document title and og:title meta tag based on lesson title
+  useEffect(() => {
+    if (lesson) {
+      // Set the document title
+      document.title = `${lessonId}. ${lesson.title}`;
+
+      // Set or update the og:title meta tag
+      let ogTitleTag = document.querySelector('meta[property="og:title"]');
+      if (!ogTitleTag) {
+        ogTitleTag = document.createElement("meta");
+        ogTitleTag.setAttribute("property", "og:title");
+        document.head.appendChild(ogTitleTag);
+      }
+      ogTitleTag.setAttribute("content", `${lessonId}. ${lesson.title}`);
+    }
+
+    // Cleanup: Optionally reset title/meta when component unmounts
+    return () => {
+      document.title = "Business Analyst Fundamentals"; // Replace with your app's default title
+      const ogTitleTag = document.querySelector('meta[property="og:title"]');
+      if (ogTitleTag) {
+        ogTitleTag.setAttribute("content", "Business Analyst Fundamentals"); // Replace with default
+      }
+    };
+  }, [lessonId, lesson]); // Runs when lessonId or lesson changes
 
   const markLessonComplete = () => {
     if (!completedLessons.includes(lessonId)) {
@@ -69,7 +92,6 @@ const LessonPage = () => {
 
   const speakContent = () => {
     if (isSpeaking) return;
-
     const textContent = lesson.content.replace(/<[^>]+>/g, "");
     const utterance = new SpeechSynthesisUtterance(textContent);
     utterance.lang = "en-US";
