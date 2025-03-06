@@ -11,12 +11,13 @@ const ProgressTracker = ({ completed, total }) => {
         <FontAwesomeIcon icon={faChartLine} className="me-2" />
         Progress
       </h5>
-      {/* Customize ProgressBar with height and additional styling */}
+      {/* Customize ProgressBar with height, additional styling, and striped effect */}
       <ProgressBar
         now={percentage}
         label={`${percentage.toFixed(1)}%`} // Optional: Show one decimal place
         style={{ height: "30px", fontSize: "16px" }} // Increase height and font size
         variant="success" // Optional: Change color to green
+        striped // Added striped effect
       />
     </div>
   );
