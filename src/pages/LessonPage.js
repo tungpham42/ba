@@ -24,6 +24,8 @@ const LessonPage = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [quizAnswers, setQuizAnswers] = useState({});
+
   useEffect(() => {
     localStorage.setItem("completedLessons", JSON.stringify(completedLessons));
   }, [completedLessons]);
@@ -32,6 +34,11 @@ const LessonPage = () => {
     if (!completedLessons.includes(lessonId)) {
       setCompletedLessons((prev) => [...prev, lessonId]);
     }
+  };
+
+  const handleNavigation = (lessonId) => {
+    setQuizAnswers({}); // Clear answers
+    navigate(`/lesson/${lessonId}`);
   };
 
   if (!lesson) {
@@ -53,10 +60,11 @@ const LessonPage = () => {
         completed={completedLessons.length}
         total={lessons.length}
       />
+
       <div className="my-4 d-flex justify-content-between">
         <Button
           variant="secondary"
-          onClick={() => navigate(`/lesson/${lessons[lessonIndex - 1].id}`)}
+          onClick={() => handleNavigation(lessons[lessonIndex - 1].id)}
           disabled={lessonIndex === 0}
         >
           <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
@@ -70,21 +78,26 @@ const LessonPage = () => {
 
         <Button
           variant="secondary"
-          onClick={() => navigate(`/lesson/${lessons[lessonIndex + 1].id}`)}
+          onClick={() => handleNavigation(lessons[lessonIndex + 1].id)}
           disabled={lessonIndex === lessons.length - 1}
         >
           Next
           <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
         </Button>
       </div>
-      <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
-      <Quiz quiz={lesson.quiz} onComplete={markLessonComplete} />
 
-      {/* Navigation Buttons */}
+      <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+      <Quiz
+        quiz={lesson.quiz}
+        onComplete={markLessonComplete}
+        answers={quizAnswers}
+        setAnswers={setQuizAnswers}
+      />
+
       <div className="mt-4 d-flex justify-content-between">
         <Button
           variant="secondary"
-          onClick={() => navigate(`/lesson/${lessons[lessonIndex - 1].id}`)}
+          onClick={() => handleNavigation(lessons[lessonIndex - 1].id)}
           disabled={lessonIndex === 0}
         >
           <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
@@ -98,7 +111,7 @@ const LessonPage = () => {
 
         <Button
           variant="secondary"
-          onClick={() => navigate(`/lesson/${lessons[lessonIndex + 1].id}`)}
+          onClick={() => handleNavigation(lessons[lessonIndex + 1].id)}
           disabled={lessonIndex === lessons.length - 1}
         >
           Next

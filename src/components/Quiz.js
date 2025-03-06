@@ -1,12 +1,8 @@
-import { useState } from "react";
 import { Form, Button, Alert } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 
-const Quiz = ({ quiz, onComplete }) => {
-  const [answers, setAnswers] = useState({});
-  const [results, setResults] = useState(null);
-
+const Quiz = ({ quiz, onComplete, answers, setAnswers }) => {
   const handleChange = (questionIdx, value) => {
     setAnswers((prev) => ({ ...prev, [questionIdx]: value }));
   };
@@ -15,14 +11,15 @@ const Quiz = ({ quiz, onComplete }) => {
     const resultArray = quiz.map((q, idx) =>
       answers[idx] === q.answer ? "Correct" : "Incorrect"
     );
-    setResults(resultArray);
 
     // Check if all answers are correct
     const allCorrect = resultArray.every((res) => res === "Correct");
 
     if (allCorrect) {
-      onComplete(); // Only mark the lesson complete when all answers are correct
+      onComplete(); // Mark lesson complete when all answers are correct
     }
+
+    setAnswers((prev) => ({ ...prev, results: resultArray }));
   };
 
   return (
@@ -40,18 +37,21 @@ const Quiz = ({ quiz, onComplete }) => {
                   id={inputId}
                   name={`quiz-${idx}`}
                   value={option}
+                  checked={answers[idx] === option}
                   onChange={(e) => handleChange(idx, e.target.value)}
                   label={<label htmlFor={inputId}>{option}</label>}
                 />
               );
             })}
           </Form>
-          {results && (
+          {answers.results && (
             <Alert
-              variant={results[idx] === "Correct" ? "success" : "danger"}
+              variant={
+                answers.results[idx] === "Correct" ? "success" : "danger"
+              }
               className="mt-2"
             >
-              {results[idx]}
+              {answers.results[idx]}
             </Alert>
           )}
         </div>
@@ -60,7 +60,7 @@ const Quiz = ({ quiz, onComplete }) => {
         <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
         Submit All Answers
       </Button>
-      {results && results.every((res) => res === "Correct") && (
+      {answers.results && answers.results.every((res) => res === "Correct") && (
         <Alert variant="success" className="mt-3">
           🎉 All answers are correct! Lesson marked as completed.
         </Alert>
