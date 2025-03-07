@@ -30,30 +30,43 @@ const LessonPage = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speech, setSpeech] = useState(null);
   const [selectedVoice, setSelectedVoice] = useState(null);
+  const [ttsReady, setTtsReady] = useState(false); // Track TTS readiness
 
   useEffect(() => {
     localStorage.setItem("completedLessons", JSON.stringify(completedLessons));
   }, [completedLessons]);
 
-  // Load voices with retry mechanism for Android
+  // Load voices with aggressive retry for Android
   useEffect(() => {
     const loadVoices = () => {
       let voices = window.speechSynthesis.getVoices();
       if (voices.length === 0) {
-        // Retry after a short delay if voices aren't loaded (common on Android)
-        setTimeout(() => {
+        console.log("No voices yet, retrying...");
+        const retryInterval = setInterval(() => {
           voices = window.speechSynthesis.getVoices();
-          setVoiceFromList(voices);
+          if (voices.length > 0) {
+            clearInterval(retryInterval);
+            setVoiceAndReady(voices);
+          }
         }, 500);
+        // Timeout after 5 seconds if no voices
+        setTimeout(() => clearInterval(retryInterval), 5000);
       } else {
-        setVoiceFromList(voices);
+        setVoiceAndReady(voices);
       }
     };
 
-    const setVoiceFromList = (voices) => {
-      const englishVoice = voices.find((v) => v.lang === "en-US") || voices[0];
+    const setVoiceAndReady = (voices) => {
+      const englishVoice =
+        voices.find((v) => v.lang === "en-US") ||
+        voices.find((v) => v.lang.startsWith("en")) ||
+        voices[0];
       setSelectedVoice(englishVoice);
-      console.log("Available voices:", voices); // Debug log for Android
+      setTtsReady(true);
+      console.log(
+        "Voices loaded:",
+        voices.map((v) => `${v.name} (${v.lang})`)
+      );
     };
 
     window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -76,7 +89,6 @@ const LessonPage = () => {
     if (lesson) {
       const title = `${lessonId}. ${lesson.title}`;
       document.title = title;
-
       let ogTitleTag = document.querySelector('meta[property="og:title"]');
       if (!ogTitleTag) {
         ogTitleTag = document.createElement("meta");
@@ -85,7 +97,6 @@ const LessonPage = () => {
       }
       ogTitleTag.setAttribute("content", title);
     }
-
     return () => {
       document.title = "Business Analyst Fundamentals";
       const ogTitleTag = document.querySelector('meta[property="og:title"]');
@@ -112,29 +123,42 @@ const LessonPage = () => {
   };
 
   const speakContent = () => {
-    if (isSpeaking || !selectedVoice) return;
+    if (isSpeaking || !selectedVoice || !ttsReady) {
+      console.log("TTS not ready or already speaking:", {
+        isSpeaking,
+        selectedVoice,
+        ttsReady,
+      });
+      return;
+    }
 
-    // Reset TTS engine to avoid Android glitches
+    // Ensure clean slate
     window.speechSynthesis.cancel();
 
     const textContent = lesson.content.replace(/<[^>]+>/g, "");
+    if (!textContent.trim()) {
+      console.log("No valid text to speak");
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(textContent);
     utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice.lang; // Ensure lang matches voice
-    utterance.rate = 1.0; // Consistent rate for Android
+    utterance.lang = selectedVoice.lang; // Match voice language
+    utterance.rate = 1.0;
     utterance.volume = 1.0;
+    utterance.pitch = 1.0; // Default pitch for consistency
 
     utterance.onstart = () => {
-      console.log("Speech started"); // Debug
+      console.log("Speech started with voice:", selectedVoice.name);
       setIsSpeaking(true);
     };
     utterance.onend = () => {
-      console.log("Speech ended"); // Debug
+      console.log("Speech ended");
       setIsSpeaking(false);
       setSpeech(null);
     };
     utterance.onerror = (e) => {
-      console.error("Speech error:", e);
+      console.error("Speech error:", e.error, e.message);
       setIsSpeaking(false);
       setSpeech(null);
     };
@@ -147,7 +171,7 @@ const LessonPage = () => {
     if (isSpeaking && speech) {
       window.speechSynthesis.pause();
       setIsSpeaking(false);
-      console.log("Speech paused"); // Debug
+      console.log("Speech paused");
     }
   };
 
@@ -155,7 +179,7 @@ const LessonPage = () => {
     if (!isSpeaking && speech) {
       window.speechSynthesis.resume();
       setIsSpeaking(true);
-      console.log("Speech resumed"); // Debug
+      console.log("Speech resumed");
     }
   };
 
@@ -163,7 +187,7 @@ const LessonPage = () => {
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
     setSpeech(null);
-    console.log("Speech stopped"); // Debug
+    console.log("Speech stopped");
   };
 
   if (!lesson) {
@@ -225,7 +249,7 @@ const LessonPage = () => {
         <Button
           variant="success"
           onClick={speakContent}
-          disabled={isSpeaking || !selectedVoice || speech}
+          disabled={isSpeaking || !ttsReady || speech}
           className="me-2"
         >
           <FontAwesomeIcon icon={faPlay} />
