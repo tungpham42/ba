@@ -31,22 +31,33 @@ const LessonPage = () => {
   const [speech, setSpeech] = useState(null);
   const [selectedVoice, setSelectedVoice] = useState(null);
 
-  // Save completed lessons to localStorage
   useEffect(() => {
     localStorage.setItem("completedLessons", JSON.stringify(completedLessons));
   }, [completedLessons]);
 
-  // Load voices for speech synthesis
+  // Load voices with retry mechanism for Android
   useEffect(() => {
     const loadVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices();
-      const englishVoice =
-        availableVoices.find((v) => v.lang === "en-US") || availableVoices[0];
-      setSelectedVoice(englishVoice); // Default to en-US or first available
+      let voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        // Retry after a short delay if voices aren't loaded (common on Android)
+        setTimeout(() => {
+          voices = window.speechSynthesis.getVoices();
+          setVoiceFromList(voices);
+        }, 500);
+      } else {
+        setVoiceFromList(voices);
+      }
+    };
+
+    const setVoiceFromList = (voices) => {
+      const englishVoice = voices.find((v) => v.lang === "en-US") || voices[0];
+      setSelectedVoice(englishVoice);
+      console.log("Available voices:", voices); // Debug log for Android
     };
 
     window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices(); // Initial call in case voices are already loaded
+    loadVoices(); // Initial call
 
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
@@ -60,7 +71,7 @@ const LessonPage = () => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [speech]);
 
-  // Set document title and og:title meta tag
+  // Set document title and og:title meta tag (unchanged)
   useEffect(() => {
     if (lesson) {
       const title = `${lessonId}. ${lesson.title}`;
@@ -103,15 +114,22 @@ const LessonPage = () => {
   const speakContent = () => {
     if (isSpeaking || !selectedVoice) return;
 
+    // Reset TTS engine to avoid Android glitches
+    window.speechSynthesis.cancel();
+
     const textContent = lesson.content.replace(/<[^>]+>/g, "");
     const utterance = new SpeechSynthesisUtterance(textContent);
-    utterance.voice = selectedVoice; // Explicitly set English voice
-    utterance.lang = selectedVoice.lang; // Match lang to voice
-    utterance.rate = 1.0; // Default rate (iOS can be inconsistent with <1)
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice.lang; // Ensure lang matches voice
+    utterance.rate = 1.0; // Consistent rate for Android
     utterance.volume = 1.0;
 
-    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onstart = () => {
+      console.log("Speech started"); // Debug
+      setIsSpeaking(true);
+    };
     utterance.onend = () => {
+      console.log("Speech ended"); // Debug
       setIsSpeaking(false);
       setSpeech(null);
     };
@@ -129,6 +147,7 @@ const LessonPage = () => {
     if (isSpeaking && speech) {
       window.speechSynthesis.pause();
       setIsSpeaking(false);
+      console.log("Speech paused"); // Debug
     }
   };
 
@@ -136,6 +155,7 @@ const LessonPage = () => {
     if (!isSpeaking && speech) {
       window.speechSynthesis.resume();
       setIsSpeaking(true);
+      console.log("Speech resumed"); // Debug
     }
   };
 
@@ -143,6 +163,7 @@ const LessonPage = () => {
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
     setSpeech(null);
+    console.log("Speech stopped"); // Debug
   };
 
   if (!lesson) {
